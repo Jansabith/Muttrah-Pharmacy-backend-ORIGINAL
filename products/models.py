@@ -22,6 +22,19 @@ class Product(models.Model):
 class ProductSize(models.Model):
     product=models.ForeignKey(Product, on_delete=models.CASCADE, related_name='sizes')
     size_name=models.CharField(max_length=100)
+
+
+class ProductImage(models.Model):
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='gallery'
+    )
+
+    image = models.ImageField(
+        upload_to='gallery/'
+    )
     
 
 
