@@ -33,3 +33,6 @@ class ProductDetailAPIView(RetrieveAPIView):
     queryset = Product.objects.all()
 
     serializer_class = ProductSerializer
+
+
+
