@@ -3,7 +3,14 @@ from .models import Product,ProductSize,ProductImage
 
 # Register your models here.
 
-admin.site.register(Product)
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("name", "company", "company_line", "category", "is_available")
+    list_filter = ("company", "company_line", "category", "is_available")
+    search_fields = ("name", "company__name", "company_line__name", "category__name")
+
+
 admin.site.register(ProductSize)
 admin.site.register(ProductImage)
 
