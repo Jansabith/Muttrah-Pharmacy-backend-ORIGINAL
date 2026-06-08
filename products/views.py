@@ -10,15 +10,26 @@ class ProductListAPIView(ListAPIView):
 
     def get_queryset(self):
 
-        queryset = Product.objects.all()
+        queryset = Product.objects.select_related(
+            'company',
+            'company_line',
+            'category'
+        ).all()
 
         company = self.request.GET.get("company")
+
+        company_line = self.request.GET.get("company_line")
 
         category = self.request.GET.get("category")
 
         if company:
             queryset = queryset.filter(
                 company_id=company
+            )
+
+        if company_line:
+            queryset = queryset.filter(
+                company_line_id=company_line
             )
 
         if category:

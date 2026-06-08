@@ -14,6 +14,11 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    company_line_name = serializers.CharField(
+        source="company_line.name",
+        read_only=True
+    )
+
     class Meta:
         model = Product
         fields = "__all__"
