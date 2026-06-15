@@ -17,6 +17,11 @@ class Product(models.Model):
     name=models.CharField(max_length=100)
     slug=models.SlugField(unique=True)
     description=models.TextField()
+    size=models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Enter sizes separated by commas, for example: S, M, L, XL'
+    )
     image=models.ImageField(upload_to='products/')
 
     is_available=models.BooleanField(default=True)

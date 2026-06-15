@@ -6,9 +6,9 @@ from .models import Product,ProductSize,ProductImage
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("name", "company", "company_line", "category", "is_available")
+    list_display = ("name", "company", "company_line", "category", "size", "is_available")
     list_filter = ("company", "company_line", "category", "is_available")
-    search_fields = ("name", "company__name", "company_line__name", "category__name")
+    search_fields = ("name", "size", "company__name", "company_line__name", "category__name")
 
 
 admin.site.register(ProductSize)

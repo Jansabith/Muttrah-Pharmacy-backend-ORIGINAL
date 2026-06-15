@@ -48,8 +48,21 @@ class HomePage(SingletonPageModel):
         max_length=220,
         default="Brands represented in the live catalog",
     )
+    brands_description = models.TextField(
+        default=(
+            "Muttrah Pharmacy partners with internationally recognized healthcare and orthopedic "
+            "brands to deliver high-quality products and trusted medical solutions across Oman. "
+            "Our portfolio includes leading manufacturers specializing in pharmaceuticals, orthopedic "
+            "care, rehabilitation, and healthcare supplies."
+        )
+    )
     categories_eyebrow = models.CharField(max_length=120, default="Product Categories")
     categories_title = models.CharField(max_length=220, default="Organized for fast sourcing")
+    trust_eyebrow = models.CharField(max_length=120, default="Why Choose Us")
+    trust_title = models.CharField(
+        max_length=220,
+        default="Why Healthcare Professionals Trust Muttrah Pharmacy",
+    )
     cta_eyebrow = models.CharField(max_length=120, default="Ready to source")
     cta_title = models.CharField(max_length=220, default="Connect with Muttrah Pharmacy today.")
     cta_button_label = models.CharField(max_length=80, default="Send Inquiry")
@@ -75,6 +88,23 @@ class HomeFeature(models.Model):
             "catalog access and fast communication."
         )
     )
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.title
+
+
+class HomeTrustItem(models.Model):
+    home_page = models.ForeignKey(
+        HomePage,
+        on_delete=models.CASCADE,
+        related_name="trust_items",
+    )
+    title = models.CharField(max_length=180)
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -127,6 +157,16 @@ class AboutPage(SingletonPageModel):
         max_length=220,
         default="Built around practical distribution milestones.",
     )
+    location_eyebrow = models.CharField(max_length=120, default="Our Location")
+    location_title = models.CharField(max_length=220, default="Visit Us in Muttrah")
+    location_description = models.TextField(
+        default="Our headquarters and main distribution center are strategically located to serve the healthcare community efficiently."
+    )
+    location_map_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3655.70020525746!2d58.542142999999996!3d23.615082400000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e91f900164bdb5b%3A0x1c2403fc0d8bf5e1!2sMUTTRAH%20PHARMACY!5e1!3m2!1sen!2sin!4v1781096686549!5m2!1sen!2sin"
+    )
 
     class Meta:
         verbose_name = "About Page Content"
@@ -134,6 +174,23 @@ class AboutPage(SingletonPageModel):
 
     def __str__(self):
         return "About Page Content"
+
+
+class AboutHeroImage(models.Model):
+    about_page = models.ForeignKey(
+        AboutPage,
+        on_delete=models.CASCADE,
+        related_name="hero_images",
+    )
+    image = models.ImageField(upload_to="about_hero/")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"Hero Image {self.id}"
 
 
 class AboutTimelineItem(models.Model):
@@ -172,6 +229,10 @@ class ContactPage(SingletonPageModel):
     )
     google_maps_embed_url = models.URLField(blank=True)
     form_button_label = models.CharField(max_length=80, default="Submit Inquiry")
+    inquiry_recipient_email = models.EmailField(
+        default="jansabithjans@gmail.com",
+        help_text="Email address where contact form submissions will be sent.",
+    )
 
     class Meta:
         verbose_name = "Contact Page Content"
@@ -179,6 +240,70 @@ class ContactPage(SingletonPageModel):
 
     def __str__(self):
         return "Contact Page Content"
+
+
+class FooterContent(SingletonPageModel):
+    brand_title = models.CharField(max_length=160, default="Muttrah Pharmacy")
+    brand_description = models.TextField(
+        default=(
+            "Supplying pharmacies, clinics, hospitals, and orthopedic care teams "
+            "across Oman with dependable warehouse-backed product availability."
+        )
+    )
+    quick_links_title = models.CharField(max_length=120, default="Quick Links")
+    contact_title = models.CharField(max_length=120, default="Contact Information")
+    address = models.CharField(max_length=240, default="Muttrah, Muscat, Sultanate of Oman")
+    email = models.EmailField(default="info@muttrahpharmacy.com")
+    phone = models.CharField(max_length=80, default="+968 0000 0000")
+    telephone = models.CharField(max_length=80, blank=True, default="+968 0000 0000")
+    copyright_text = models.CharField(
+        max_length=180,
+        default="Copyright 2026 Muttrah Pharmacy. All rights reserved.",
+    )
+    bottom_note = models.CharField(max_length=160, default="Live Django REST catalog data.")
+
+    class Meta:
+        verbose_name = "Footer Content"
+        verbose_name_plural = "Footer Content"
+
+    def __str__(self):
+        return "Footer Content"
+
+
+class FooterQuickLink(models.Model):
+    footer = models.ForeignKey(
+        FooterContent,
+        on_delete=models.CASCADE,
+        related_name="quick_links",
+    )
+    label = models.CharField(max_length=80)
+    url = models.CharField(max_length=240)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.label
+
+
+class FooterSocialLink(models.Model):
+    footer = models.ForeignKey(
+        FooterContent,
+        on_delete=models.CASCADE,
+        related_name="social_links",
+    )
+    label = models.CharField(max_length=40)
+    url = models.CharField(max_length=240, default="#top")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.label
 
 
 class ContactSubmission(models.Model):
