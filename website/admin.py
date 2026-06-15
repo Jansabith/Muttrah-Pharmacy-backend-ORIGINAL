@@ -4,8 +4,13 @@ from .models import (
     AboutTimelineItem,
     ContactPage,
     ContactSubmission,
+    FooterContent,
+    FooterQuickLink,
+    FooterSocialLink,
     HomeFeature,
     HomePage,
+    HomeTrustItem,
+    AboutHeroImage,
 )
 
 
@@ -22,9 +27,15 @@ class HomeFeatureInline(admin.TabularInline):
     fields = ("title", "description", "order", "is_active")
 
 
+class HomeTrustItemInline(admin.TabularInline):
+    model = HomeTrustItem
+    extra = 1
+    fields = ("title", "order", "is_active")
+
+
 @admin.register(HomePage)
 class HomePageAdmin(SingletonPageAdmin):
-    inlines = [HomeFeatureInline]
+    inlines = [HomeFeatureInline, HomeTrustItemInline]
     fieldsets = (
         ("Hero Section", {
             "fields": (
@@ -42,9 +53,13 @@ class HomePageAdmin(SingletonPageAdmin):
             "fields": (
                 "brands_eyebrow",
                 "brands_title",
+                "brands_description",
                 "categories_eyebrow",
                 "categories_title",
             )
+        }),
+        ("Trust Section", {
+            "fields": ("trust_eyebrow", "trust_title")
         }),
         ("CTA Section", {
             "fields": ("cta_eyebrow", "cta_title", "cta_button_label")
@@ -58,9 +73,15 @@ class AboutTimelineItemInline(admin.TabularInline):
     fields = ("title", "description", "order", "is_active")
 
 
+class AboutHeroImageInline(admin.TabularInline):
+    model = AboutHeroImage
+    extra = 1
+    fields = ("image", "order", "is_active")
+
+
 @admin.register(AboutPage)
 class AboutPageAdmin(SingletonPageAdmin):
-    inlines = [AboutTimelineItemInline]
+    inlines = [AboutHeroImageInline, AboutTimelineItemInline]
     fieldsets = (
         ("Company Overview", {
             "fields": ("eyebrow", "title", "overview")
@@ -84,6 +105,14 @@ class AboutPageAdmin(SingletonPageAdmin):
                 "brands_title",
                 "timeline_eyebrow",
                 "timeline_title",
+            )
+        }),
+        ("Map Location", {
+            "fields": (
+                "location_eyebrow",
+                "location_title",
+                "location_description",
+                "location_map_url",
             )
         }),
     )
@@ -111,7 +140,39 @@ class ContactPageAdmin(SingletonPageAdmin):
                 "map_description",
                 "google_maps_embed_url",
                 "form_button_label",
+                "inquiry_recipient_email",
             )
+        }),
+    )
+
+
+class FooterQuickLinkInline(admin.TabularInline):
+    model = FooterQuickLink
+    extra = 1
+    fields = ("label", "url", "order", "is_active")
+
+
+class FooterSocialLinkInline(admin.TabularInline):
+    model = FooterSocialLink
+    extra = 1
+    fields = ("label", "url", "order", "is_active")
+
+
+@admin.register(FooterContent)
+class FooterContentAdmin(SingletonPageAdmin):
+    inlines = [FooterQuickLinkInline, FooterSocialLinkInline]
+    fieldsets = (
+        ("Brand Section", {
+            "fields": ("brand_title", "brand_description")
+        }),
+        ("Section Titles", {
+            "fields": ("quick_links_title", "contact_title")
+        }),
+        ("Contact Information", {
+            "fields": ("address", "email", "phone", "telephone")
+        }),
+        ("Bottom Bar", {
+            "fields": ("copyright_text", "bottom_note")
         }),
     )
 
