@@ -45,5 +45,4 @@ class ProductDetailAPIView(RetrieveAPIView):
 
     serializer_class = ProductSerializer
 
-
-
+    lookup_field = 'slug'

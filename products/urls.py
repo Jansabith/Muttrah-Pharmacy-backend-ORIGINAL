@@ -8,7 +8,7 @@ urlpatterns = [
     path('', ProductListAPIView.as_view(), name='product-list'),
 
     path(
-        '<int:pk>/',
+        '<slug:slug>/',
         ProductDetailAPIView.as_view(),
         name='product-detail'
     ),
