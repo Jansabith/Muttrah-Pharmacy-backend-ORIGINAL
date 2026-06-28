@@ -37,6 +37,9 @@ class HomeTrustItemInline(admin.TabularInline):
 class HomePageAdmin(SingletonPageAdmin):
     inlines = [HomeFeatureInline, HomeTrustItemInline]
     fieldsets = (
+        ("Global Settings", {
+            "fields": ("whatsapp_number",)
+        }),
         ("Hero Section", {
             "fields": (
                 "hero_eyebrow",
@@ -63,6 +66,10 @@ class HomePageAdmin(SingletonPageAdmin):
         }),
         ("CTA Section", {
             "fields": ("cta_eyebrow", "cta_title", "cta_button_label")
+        }),
+        ("SEO & Search Engine Optimization", {
+            "fields": ("meta_title", "meta_description", "meta_keywords"),
+            "classes": ("collapse",),
         }),
     )
 
@@ -115,6 +122,10 @@ class AboutPageAdmin(SingletonPageAdmin):
                 "location_map_url",
             )
         }),
+        ("SEO & Search Engine Optimization", {
+            "fields": ("meta_title", "meta_description", "meta_keywords"),
+            "classes": ("collapse",),
+        }),
     )
 
 
@@ -142,6 +153,10 @@ class ContactPageAdmin(SingletonPageAdmin):
                 "form_button_label",
                 "inquiry_recipient_email",
             )
+        }),
+        ("SEO & Search Engine Optimization", {
+            "fields": ("meta_title", "meta_description", "meta_keywords"),
+            "classes": ("collapse",),
         }),
     )
 
