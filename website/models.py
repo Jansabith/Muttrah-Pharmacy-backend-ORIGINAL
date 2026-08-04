@@ -4,6 +4,23 @@ from django.db import models
 
 class SingletonPageModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
+    meta_title = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="SEO Meta Title (max 60-70 characters)"
+    )
+    meta_description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="SEO Meta Description (max 150-160 characters)"
+    )
+    meta_keywords = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="SEO Meta Keywords (comma-separated)"
+    )
 
     class Meta:
         abstract = True
@@ -25,6 +42,11 @@ class SingletonPageModel(models.Model):
 
 
 class HomePage(SingletonPageModel):
+    whatsapp_number = models.CharField(
+        max_length=20,
+        default="96899793939",
+        help_text="WhatsApp number for contact buttons (e.g., 96899793939)"
+    )
     hero_eyebrow = models.CharField(
         max_length=180,
         default="Pharmaceutical and orthopedic distributor in Oman",

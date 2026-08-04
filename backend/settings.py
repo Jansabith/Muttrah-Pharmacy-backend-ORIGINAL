@@ -10,23 +10,41 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import dj_database_url
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+import environ
+import dj_database_url  
+
+
+env = environ.Env()
+environ.Env.read_env()
+
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mz34=msr2v_p6r-n(zxcv!bnl^$rqyrw=$t_gc6l)c68r+$hdo'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = []
 
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS_DEPLOY')
+
+
+# ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -92,39 +110,17 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'Muttrah_db',
-#         'USER': 'jan',
-#         'PASSWORD': 'Sabith@123',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST', 'localhost'),
+#         'PORT': os.getenv('DB_PORT', '5432'),
 #     }
 # }
 
-
-
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'neondb',
-        'USER': 'neondb_owner',
-        'PASSWORD': 'npg_bWigtfU32ZxV',
-        'HOST': 'ep-holy-boat-azhk2r99-pooler.c-3.ap-southeast-1.aws.neon.tech',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
+    "default": dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -163,10 +159,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 CORS_ALLOW_ALL_ORIGINS = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+
+# CORS
+
+CORS_ALLOWED_ORIGINS=env.list('CORS_ALLOWED_ORIGINS_DEPLOY')
+CORS_ALLOWED_WHITELIST=env.list('CORS_ALLOWED_WHITELIST_DEPLOY')
+CSRF_TRUSTED_ORIGINS=env.list('CSRF_TRUSTED_ORIGINS_DEPLOY')
 
