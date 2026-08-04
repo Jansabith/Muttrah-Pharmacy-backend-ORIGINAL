@@ -89,16 +89,43 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'Muttrah_db',
+#         'USER': 'jan',
+#         'PASSWORD': 'Sabith@123',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Muttrah_db',
-        'USER': 'jan',
-        'PASSWORD': 'Sabith@123',
-        'HOST': 'localhost',
+        'NAME': 'neondb',
+        'USER': 'neondb_owner',
+        'PASSWORD': 'npg_bWigtfU32ZxV',
+        'HOST': 'ep-holy-boat-azhk2r99-pooler.c-3.ap-southeast-1.aws.neon.tech',
         'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
+
+
+
+
+
+
+
+
+
+
 
 
 # Password validation
