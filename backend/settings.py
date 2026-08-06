@@ -57,9 +57,11 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
-    'cloudinary_storage',
-    'cloudinary',
 ]
+
+# Cloudinary is optional — only add when configured
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -156,15 +158,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Cloudinary configuration for media files in production
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
-}
-
-# Use Cloudinary for media storage in production, local storage in development
-if not DEBUG and CLOUDINARY_STORAGE['CLOUD_NAME']:
+# Cloudinary configuration for media files (optional — only when env vars are set)
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+    }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
