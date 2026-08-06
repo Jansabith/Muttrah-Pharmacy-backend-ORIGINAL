@@ -96,11 +96,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Uses DATABASE_URL env var in production (Neon/Render),
-# falls back to your local Neon connection for development
+# Uses DATABASE_URL env var (from .env file locally, from Render env vars in production)
+# NEVER hardcode credentials here — use .env file instead
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://neondb_owner:npg_bWigtfU32ZxV@ep-holy-boat-azhk2r99-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'
+        default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
     )
 }
 
