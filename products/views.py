@@ -1,12 +1,21 @@
 from django.shortcuts import render
-
-from rest_framework.generics import ListAPIView,RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import filters
 from .models import Product
-from .serializers import ProductSerializer  
+from .serializers import ProductSerializer
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 24
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 # Create your views here.
 class ProductListAPIView(ListAPIView):
-
     serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description', 'company__name', 'company_line__name', 'category__name']
 
     def get_queryset(self):
 
