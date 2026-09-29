@@ -1,5 +1,6 @@
 from django.db import models
 
+from backend.image_utils import convert_to_webp
 from categories.models import Category
 from companies.models import Company, CompanyLine
 
@@ -27,8 +28,15 @@ class Product(models.Model):
     is_available=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at', 'id']
+
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.image)
+        super().save(*args, **kwargs)
     
 
 class ProductSize(models.Model):
@@ -47,6 +55,10 @@ class ProductImage(models.Model):
     image = models.ImageField(
         upload_to='gallery/'
     )
+
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.image)
+        super().save(*args, **kwargs)
     
 
 

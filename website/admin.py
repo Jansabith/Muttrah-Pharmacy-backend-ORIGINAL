@@ -3,7 +3,6 @@ from .models import (
     AboutPage,
     AboutTimelineItem,
     ContactPage,
-    ContactSubmission,
     FooterContent,
     FooterQuickLink,
     FooterSocialLink,
@@ -134,13 +133,11 @@ class ContactPageAdmin(SingletonPageAdmin):
                 "phone",
             )
         }),
-        ("Map and Form", {
+        ("Map", {
             "fields": (
                 "map_title",
                 "map_description",
                 "google_maps_embed_url",
-                "form_button_label",
-                "inquiry_recipient_email",
             )
         }),
     )
@@ -175,12 +172,3 @@ class FooterContentAdmin(SingletonPageAdmin):
             "fields": ("copyright_text", "bottom_note")
         }),
     )
-
-
-@admin.register(ContactSubmission)
-class ContactSubmissionAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "phone", "created_at", "is_read")
-    list_filter = ("is_read", "created_at")
-    search_fields = ("name", "email", "phone", "message")
-    readonly_fields = ("name", "email", "phone", "message", "created_at")
-    list_editable = ("is_read",)
