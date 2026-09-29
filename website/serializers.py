@@ -3,7 +3,6 @@ from .models import (
     AboutPage,
     AboutTimelineItem,
     ContactPage,
-    ContactSubmission,
     FooterContent,
     FooterQuickLink,
     FooterSocialLink,
@@ -109,10 +108,3 @@ class FooterContentSerializer(serializers.ModelSerializer):
     def get_social_links(self, obj):
         queryset = obj.social_links.filter(is_active=True)
         return FooterSocialLinkSerializer(queryset, many=True).data
-
-
-class ContactSubmissionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactSubmission
-        fields = ("id", "name", "email", "phone", "message", "created_at")
-        read_only_fields = ("id", "created_at")

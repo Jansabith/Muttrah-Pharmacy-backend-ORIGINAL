@@ -41,11 +41,6 @@ urlpatterns = [
         'api/website/',
         include('website.urls')
     ),
-
-    path(
-        'api/contact/',
-        include('website.contact_urls')
-    ),
 ]
 
 if settings.DEBUG:

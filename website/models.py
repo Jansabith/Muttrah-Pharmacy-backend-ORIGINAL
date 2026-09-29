@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from backend.image_utils import convert_to_webp
+
 
 class SingletonPageModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
@@ -192,6 +194,10 @@ class AboutHeroImage(models.Model):
     def __str__(self):
         return f"Hero Image {self.id}"
 
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.image)
+        super().save(*args, **kwargs)
+
 
 class AboutTimelineItem(models.Model):
     about_page = models.ForeignKey(
@@ -215,7 +221,7 @@ class ContactPage(SingletonPageModel):
     eyebrow = models.CharField(max_length=120, default="Contact Us")
     title = models.CharField(max_length=220, default="Send a product or distribution inquiry")
     description = models.TextField(
-        default="Use the form below to post directly to the Django contact API."
+        default="Reach Muttrah Pharmacy for product availability, pricing, and distribution inquiries."
     )
     address_label = models.CharField(max_length=80, default="Address")
     address = models.CharField(max_length=240, default="Muttrah, Muscat, Sultanate of Oman")
@@ -228,11 +234,6 @@ class ContactPage(SingletonPageModel):
         default="Map embed placeholder ready for your Google Maps iframe."
     )
     google_maps_embed_url = models.URLField(blank=True)
-    form_button_label = models.CharField(max_length=80, default="Submit Inquiry")
-    inquiry_recipient_email = models.EmailField(
-        default="jansabithjans@gmail.com",
-        help_text="Email address where contact form submissions will be sent.",
-    )
 
     class Meta:
         verbose_name = "Contact Page Content"
@@ -304,18 +305,3 @@ class FooterSocialLink(models.Model):
 
     def __str__(self):
         return self.label
-
-
-class ContactSubmission(models.Model):
-    name = models.CharField(max_length=120)
-    email = models.EmailField()
-    phone = models.CharField(max_length=80)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.name} - {self.email}"
