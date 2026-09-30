@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import (
     AboutPage,
     AboutTimelineItem,
@@ -7,6 +8,7 @@ from .models import (
     FooterQuickLink,
     FooterSocialLink,
     HomeFeature,
+    HomeHeroSlide,
     HomePage,
     HomeTrustItem,
     AboutHeroImage,
@@ -32,9 +34,52 @@ class HomeTrustItemInline(admin.TabularInline):
     fields = ("title", "order", "is_active")
 
 
+class HomeHeroSlideInline(admin.StackedInline):
+    model = HomeHeroSlide
+    extra = 0
+    verbose_name_plural = "Hero slides (shown in order; the video plays if there are none)"
+    readonly_fields = ("desktop_preview", "tablet_preview", "mobile_preview")
+    fieldsets = (
+        (None, {
+            "fields": (("order", "is_active"), "alt_text", ("display", "focus")),
+        }),
+        ("Desktop (1280 px and wider)", {
+            "fields": ("image", "desktop_preview"),
+        }),
+        ("Tablet (768 to 1279 px) - optional", {
+            "fields": ("tablet_image", "tablet_preview"),
+        }),
+        ("Phone (below 768 px) - optional", {
+            "fields": ("mobile_image", "mobile_preview"),
+        }),
+    )
+
+    @staticmethod
+    def _preview(field_file, height):
+        if not field_file:
+            return "No image uploaded"
+        return format_html(
+            '<img src="{}" style="height:{}px;width:auto;border-radius:6px;border:1px solid #ddd;" />',
+            field_file.url,
+            height,
+        )
+
+    @admin.display(description="Preview")
+    def desktop_preview(self, obj):
+        return self._preview(obj.image, 110)
+
+    @admin.display(description="Preview")
+    def tablet_preview(self, obj):
+        return self._preview(obj.tablet_image, 130)
+
+    @admin.display(description="Preview")
+    def mobile_preview(self, obj):
+        return self._preview(obj.mobile_image, 160)
+
+
 @admin.register(HomePage)
 class HomePageAdmin(SingletonPageAdmin):
-    inlines = [HomeFeatureInline, HomeTrustItemInline]
+    inlines = [HomeHeroSlideInline, HomeFeatureInline, HomeTrustItemInline]
     fieldsets = (
         ("Hero Section", {
             "fields": (
