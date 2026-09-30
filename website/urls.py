@@ -1,10 +1,12 @@
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path
+
+from backend.sitemaps import sitemaps
 from .views import (
     AboutPageAPIView,
     ContactPageAPIView,
     FooterContentAPIView,
     HomePageAPIView,
-    sitemap_view,
 )
 
 urlpatterns = [
@@ -12,5 +14,6 @@ urlpatterns = [
     path("about/", AboutPageAPIView.as_view(), name="website-about"),
     path("contact/", ContactPageAPIView.as_view(), name="website-contact"),
     path("footer/", FooterContentAPIView.as_view(), name="website-footer"),
-    path("sitemap.xml", sitemap_view, name="sitemap"),
+    # Older address for the sitemap; serves the same sitemap as /sitemap.xml
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
 ]

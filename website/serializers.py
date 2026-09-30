@@ -7,10 +7,17 @@ from .models import (
     FooterQuickLink,
     FooterSocialLink,
     HomeFeature,
+    HomeHeroSlide,
     HomePage,
     HomeTrustItem,
     AboutHeroImage,
 )
+
+
+class HomeHeroSlideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeHeroSlide
+        fields = ("id", "image", "tablet_image", "mobile_image", "alt_text", "display", "focus", "order")
 
 
 class HomeFeatureSerializer(serializers.ModelSerializer):
@@ -28,10 +35,15 @@ class HomeTrustItemSerializer(serializers.ModelSerializer):
 class HomePageSerializer(serializers.ModelSerializer):
     features = serializers.SerializerMethodField()
     trust_items = serializers.SerializerMethodField()
+    hero_slides = serializers.SerializerMethodField()
 
     class Meta:
         model = HomePage
         fields = "__all__"
+
+    def get_hero_slides(self, obj):
+        queryset = obj.hero_slides.filter(is_active=True)
+        return HomeHeroSlideSerializer(queryset, many=True, context=self.context).data
 
     def get_features(self, obj):
         queryset = obj.features.filter(is_active=True)

@@ -19,9 +19,18 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
+from django.contrib.sitemaps.views import sitemap
+
+from .sitemaps import sitemaps
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path(
+        'sitemap.xml',
+        sitemap,
+        {'sitemaps': sitemaps},
+        name='django.contrib.sitemaps.views.sitemap',
+    ),
       path(
         'api/companies/',
         include('companies.urls')

@@ -24,9 +24,32 @@ class Product(models.Model):
         help_text='Enter sizes separated by commas, for example: S, M, L, XL'
     )
     image=models.ImageField(upload_to='products/')
+    youtube_url=models.URLField(
+        blank=True,
+        help_text='Optional YouTube video link, for example: https://www.youtube.com/watch?v=XXXXXXXXXXX'
+    )
+
+    # Column types match SEO columns an earlier (since removed) migration
+    # created in some databases, so both old and fresh databases line up.
+    meta_title=models.CharField(
+        'SEO title',
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Optional. Title shown in Google results and the browser tab (best under 60 characters). '
+                  '" | Muttrah Pharmacy" is added automatically. Leave empty to use the product name.'
+    )
+    meta_description=models.TextField(
+        'SEO description',
+        blank=True,
+        null=True,
+        help_text='Optional. Text shown under the title in Google results (best 120-155 characters). '
+                  'Leave empty to use the start of the product description.'
+    )
 
     is_available=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
+    updated_at=models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at', 'id']

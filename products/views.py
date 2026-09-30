@@ -23,7 +23,7 @@ class ProductListAPIView(ListAPIView):
             'company',
             'company_line',
             'category'
-        ).all()
+        ).prefetch_related('gallery').all()
 
         company = self.request.GET.get("company")
 
@@ -50,7 +50,7 @@ class ProductListAPIView(ListAPIView):
     
 class ProductDetailAPIView(RetrieveAPIView):
 
-    queryset = Product.objects.all()
+    queryset = Product.objects.prefetch_related('gallery').all()
 
     serializer_class = ProductSerializer
 

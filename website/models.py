@@ -100,6 +100,74 @@ class HomeFeature(models.Model):
         return self.title
 
 
+class HomeHeroSlide(models.Model):
+    home_page = models.ForeignKey(
+        HomePage,
+        on_delete=models.CASCADE,
+        related_name="hero_slides",
+    )
+    image = models.ImageField(
+        "Desktop image",
+        upload_to="home_hero/",
+        help_text="Required. Laptops and desktops (1280 px and wider). Recommended 1920 x 1080 px, landscape 16:9.",
+    )
+    tablet_image = models.ImageField(
+        upload_to="home_hero/tablet/",
+        blank=True,
+        help_text="Optional. Tablets (768 to 1279 px wide). Recommended 1536 x 1152 px, 4:3. Uses the desktop image if empty.",
+    )
+    mobile_image = models.ImageField(
+        upload_to="home_hero/mobile/",
+        blank=True,
+        help_text="Optional. Phones (below 768 px wide). Recommended 1080 x 1920 px, portrait 9:16. Uses the tablet or desktop image if empty.",
+    )
+    alt_text = models.CharField(
+        max_length=180,
+        blank=True,
+        help_text="Short description of the image for accessibility and SEO.",
+    )
+    FOCUS_CHOICES = [
+        ("top", "Top"),
+        ("center", "Center"),
+        ("bottom", "Bottom"),
+    ]
+    focus = models.CharField(
+        max_length=10,
+        choices=FOCUS_CHOICES,
+        default="bottom",
+        help_text="Only for 'Fill screen': which part of the image stays visible when the screen crops it.",
+    )
+    DISPLAY_CHOICES = [
+        ("cover", "Fill screen (may crop edges)"),
+        ("contain", "Show whole image (never crops)"),
+    ]
+    display = models.CharField(
+        max_length=10,
+        choices=DISPLAY_CHOICES,
+        default="cover",
+        help_text=(
+            "Fill screen suits wide lifestyle photos. Show whole image suits product boxes, "
+            "packaging, logos or text - the full image sits on the right over a blurred copy of itself."
+        ),
+    )
+    order = models.PositiveIntegerField(default=0, help_text="Lower numbers show first.")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Hero slide"
+        verbose_name_plural = "Hero slides"
+
+    def __str__(self):
+        return self.alt_text or f"Hero slide {self.id}"
+
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.image)
+        convert_to_webp(self.tablet_image)
+        convert_to_webp(self.mobile_image)
+        super().save(*args, **kwargs)
+
+
 class HomeTrustItem(models.Model):
     home_page = models.ForeignKey(
         HomePage,
