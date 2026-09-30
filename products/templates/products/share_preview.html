@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <meta name="description" content="{{ description }}">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="{{ page_url }}">
+
+  <meta property="og:type" content="product">
+  <meta property="og:site_name" content="Muttrah Pharmacy">
+  <meta property="og:title" content="{{ title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ page_url }}">
+  {% if image_url %}
+  <meta property="og:image" content="{{ image_url }}">
+  <meta property="og:image:secure_url" content="{{ image_url }}">
+  <meta property="og:image:alt" content="{{ product.name }}">
+  {% endif %}
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ title }}">
+  <meta name="twitter:description" content="{{ description }}">
+  {% if image_url %}<meta name="twitter:image" content="{{ image_url }}">{% endif %}
+
+  <!-- People are sent straight on to the real product page -->
+  <meta http-equiv="refresh" content="0; url={{ page_url }}">
+  <script>window.location.replace(document.querySelector('link[rel="canonical"]').href);</script>
+</head>
+<body>
+  <p><a href="{{ page_url }}">{{ product.name }} – Muttrah Pharmacy</a></p>
+</body>
+</html>

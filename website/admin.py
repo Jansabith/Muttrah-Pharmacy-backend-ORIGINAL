@@ -37,7 +37,7 @@ class HomeTrustItemInline(admin.TabularInline):
 class HomeHeroSlideInline(admin.StackedInline):
     model = HomeHeroSlide
     extra = 0
-    verbose_name_plural = "Hero slides (shown in order; the video plays if there are none)"
+    verbose_name_plural = "Hero slides (shown in order)"
     readonly_fields = ("desktop_preview", "tablet_preview", "mobile_preview")
     fieldsets = (
         (None, {
