@@ -180,7 +180,10 @@ CSRF_TRUSTED_ORIGINS = [
     origin for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+# Public website address, used by the sitemap and shared product links.
+# Defaults to the live site so production works without extra settings;
+# set FRONTEND_URL=http://localhost:5173 in a local .env to test locally.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://muttrahpharmacy.com')
 
 # Send login/CSRF cookies over HTTPS only. Defaults to on when DEBUG is off.
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', str(not DEBUG)) == 'True'
