@@ -5,6 +5,8 @@ from django.contrib.sitemaps import Sitemap
 
 from products.models import Product
 
+# Set FRONTEND_URL=https://muttrahpharmacy.com in the server's .env so the
+# sitemap links point to the live website.
 FRONTEND = urlparse(settings.FRONTEND_URL)
 
 

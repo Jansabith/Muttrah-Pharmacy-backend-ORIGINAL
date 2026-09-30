@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.conf import settings
+from django.shortcuts import get_object_or_404, render
+from django.utils.text import Truncator
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
@@ -48,6 +50,32 @@ class ProductListAPIView(ListAPIView):
 
         return queryset
     
+def product_share_preview(request, slug):
+    """Link-preview page for WhatsApp, Facebook, etc.
+
+    Chat apps don't run the React app's JavaScript, so they can't see each
+    product's title and image. This page gives them those tags directly and
+    forwards real visitors to the product page on the website.
+    """
+    product = get_object_or_404(Product, slug=slug)
+
+    title = product.meta_title or product.name
+    if 'muttrah pharmacy' not in title.lower():
+        title = f'{title} | Muttrah Pharmacy'
+    description = product.meta_description or Truncator(product.description).chars(155)
+
+    image_url = request.build_absolute_uri(product.image.url) if product.image else ''
+    page_url = f"{settings.FRONTEND_URL.rstrip('/')}/products/{product.slug}"
+
+    return render(request, 'products/share_preview.html', {
+        'product': product,
+        'title': title,
+        'description': description,
+        'image_url': image_url,
+        'page_url': page_url,
+    })
+
+
 class ProductDetailAPIView(RetrieveAPIView):
 
     queryset = Product.objects.prefetch_related('gallery').all()

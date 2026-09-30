@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.urls import path, include
 from django.contrib.sitemaps.views import sitemap
 
+from products.views import product_share_preview
 from .sitemaps import sitemaps
 
 urlpatterns = [
@@ -30,6 +31,11 @@ urlpatterns = [
         sitemap,
         {'sitemaps': sitemaps},
         name='django.contrib.sitemaps.views.sitemap',
+    ),
+    path(
+        'share/products/<slug:slug>/',
+        product_share_preview,
+        name='product-share-preview',
     ),
       path(
         'api/companies/',

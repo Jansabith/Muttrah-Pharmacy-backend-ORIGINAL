@@ -18,6 +18,9 @@ def convert_to_webp(field_file, quality=85):
         return
 
     image = Image.open(field_file)
+    # Keep the colour profile (e.g. Display P3 from phones/Photoshop) so colours
+    # in the WebP match the uploaded file instead of looking washed out
+    icc_profile = image.info.get('icc_profile')
     # Phone photos store rotation in EXIF; apply it so images aren't sideways
     image = ImageOps.exif_transpose(image)
 
@@ -27,7 +30,10 @@ def convert_to_webp(field_file, quality=85):
     image = image.convert('RGBA' if has_alpha else 'RGB')
 
     buffer = BytesIO()
-    image.save(buffer, format='WEBP', quality=quality, method=6)
+    save_options = {'format': 'WEBP', 'quality': quality, 'method': 6}
+    if icc_profile:
+        save_options['icc_profile'] = icc_profile
+    image.save(buffer, **save_options)
 
     base_name = os.path.splitext(os.path.basename(field_file.name))[0]
     field_file.save(f'{base_name}.webp', ContentFile(buffer.getvalue()), save=False)
