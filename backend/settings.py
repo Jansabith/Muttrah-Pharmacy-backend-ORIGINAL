@@ -156,7 +156,13 @@ STORAGES = {
 }
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "https://muttrahpharmacy.com",
+    "https://www.muttrahpharmacy.com",
+    "http://localhost:5173",
+]
 
 # Media files
 MEDIA_URL = '/media/'
