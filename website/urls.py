@@ -7,10 +7,12 @@ from .views import (
     ContactPageAPIView,
     FooterContentAPIView,
     HomePageAPIView,
+    ShowcaseAPIView,
 )
 
 urlpatterns = [
     path("home/", HomePageAPIView.as_view(), name="website-home"),
+    path("showcase/", ShowcaseAPIView.as_view(), name="website-showcase"),
     path("about/", AboutPageAPIView.as_view(), name="website-about"),
     path("contact/", ContactPageAPIView.as_view(), name="website-contact"),
     path("footer/", FooterContentAPIView.as_view(), name="website-footer"),

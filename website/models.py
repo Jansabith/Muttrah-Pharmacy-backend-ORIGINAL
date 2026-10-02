@@ -45,6 +45,14 @@ class HomePage(SingletonPageModel):
         max_length=220,
         default="Built for dependable medical product distribution.",
     )
+    intro_description = models.TextField(
+        blank=True,
+        default=(
+            "We are a leading supplier of pharmaceutical products, orthopedic solutions, "
+            "rehabilitation aids, surgical supplies, and healthcare equipment, committed to "
+            "supporting hospitals, clinics, and customers across Oman."
+        ),
+    )
     brands_eyebrow = models.CharField(max_length=120, default="Featured Brands")
     brands_title = models.CharField(
         max_length=220,
@@ -78,12 +86,27 @@ class HomePage(SingletonPageModel):
 
 
 class HomeFeature(models.Model):
+    ICON_CHOICES = [
+        ("trophy", "Trophy"),
+        ("people", "People / Team"),
+        ("box", "Box / Package"),
+        ("truck", "Delivery Truck"),
+        ("shield", "Shield"),
+        ("heart", "Heart"),
+    ]
+
     home_page = models.ForeignKey(
         HomePage,
         on_delete=models.CASCADE,
         related_name="features",
     )
     title = models.CharField(max_length=160)
+    icon = models.CharField(
+        max_length=20,
+        choices=ICON_CHOICES,
+        default="trophy",
+        help_text="Icon shown next to the title in the Company Introduction section.",
+    )
     description = models.TextField(
         default=(
             "A practical operating model for procurement teams that need clear "
@@ -183,6 +206,81 @@ class HomeTrustItem(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ShowcaseTab(models.Model):
+    """One tab of the home page product showcase (Best Sellers, Featured,
+    New Launches). The three tabs are created by a migration and can't be
+    added or deleted in the admin, only edited."""
+
+    KEY_CHOICES = [
+        ("best_sellers", "Best Sellers"),
+        ("featured", "Featured"),
+        ("new_launches", "New Launches"),
+    ]
+
+    key = models.CharField(max_length=20, choices=KEY_CHOICES, unique=True, editable=False)
+    name = models.CharField(
+        "Tab name",
+        max_length=60,
+        help_text="Text on the tab button and the section heading, e.g. Best Sellers.",
+    )
+    subtitle = models.CharField(
+        max_length=220,
+        blank=True,
+        help_text="Short line under the heading while this tab is open.",
+    )
+    is_active = models.BooleanField(
+        "Show tab",
+        default=True,
+        help_text="Untick to hide this tab on the website without removing its products.",
+    )
+    order = models.PositiveIntegerField(
+        "Tab position",
+        default=0,
+        help_text="Position of the tab button. 1 is the first button.",
+    )
+    products = models.ManyToManyField(
+        "products.Product",
+        through="ShowcaseItem",
+        related_name="showcase_tabs",
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Home product showcase tab"
+        verbose_name_plural = "Home product showcase"
+
+    def __str__(self):
+        return self.name
+
+
+class ShowcaseItem(models.Model):
+    """A product chosen for a showcase tab, with its position in that tab."""
+
+    tab = models.ForeignKey(ShowcaseTab, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="showcase_items",
+    )
+    order = models.PositiveIntegerField(
+        "Position",
+        default=0,
+        help_text="1 shows first.",
+    )
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Product in this tab"
+        verbose_name_plural = "Products in this tab - set their order"
+        constraints = [
+            models.UniqueConstraint(fields=["tab", "product"], name="unique_showcase_tab_product"),
+        ]
+
+    def __str__(self):
+        return f"{self.tab.name}: {self.product.name}"
 
 
 class AboutPage(SingletonPageModel):
@@ -295,8 +393,19 @@ class ContactPage(SingletonPageModel):
     address = models.CharField(max_length=240, default="Muttrah, Muscat, Sultanate of Oman")
     email_label = models.CharField(max_length=80, default="Email")
     email = models.EmailField(default="info@muttrahpharmacy.com")
+    email_2 = models.EmailField(
+        "Second email",
+        blank=True,
+        help_text="Optional. Shown under the first email.",
+    )
     phone_label = models.CharField(max_length=80, default="Phone")
     phone = models.CharField(max_length=80, default="+968 0000 0000")
+    phone_2 = models.CharField(
+        "Second phone",
+        max_length=80,
+        blank=True,
+        help_text="Optional. Shown under the first phone number.",
+    )
     map_title = models.CharField(max_length=160, default="Muttrah, Muscat")
     map_description = models.TextField(
         default="Map embed placeholder ready for your Google Maps iframe."
@@ -323,6 +432,11 @@ class FooterContent(SingletonPageModel):
     contact_title = models.CharField(max_length=120, default="Contact Information")
     address = models.CharField(max_length=240, default="Muttrah, Muscat, Sultanate of Oman")
     email = models.EmailField(default="info@muttrahpharmacy.com")
+    email_2 = models.EmailField(
+        "Second email",
+        blank=True,
+        help_text="Optional. Shown under the first email in the footer.",
+    )
     phone = models.CharField(max_length=80, default="+968 0000 0000")
     telephone = models.CharField(max_length=80, blank=True, default="+968 0000 0000")
     copyright_text = models.CharField(
@@ -330,6 +444,27 @@ class FooterContent(SingletonPageModel):
         default="Copyright 2026 Muttrah Pharmacy. All rights reserved.",
     )
     bottom_note = models.CharField(max_length=160, default="Live Django REST catalog data.")
+    background_image = models.ImageField(
+        upload_to="footer/",
+        blank=True,
+        help_text=(
+            "Optional. Shown behind the whole footer, full width on every screen size, "
+            "with a dark shade over it so the text stays readable. "
+            "A wide landscape photo works best, around 1920 x 800 px."
+        ),
+    )
+    SHADE_CHOICES = [
+        ("light", "Light - image clearly visible"),
+        ("medium", "Medium"),
+        ("strong", "Strong - image very subtle"),
+    ]
+    background_shade = models.CharField(
+        "Background shade",
+        max_length=10,
+        choices=SHADE_CHOICES,
+        default="medium",
+        help_text="How dark the shade over the background image is.",
+    )
 
     class Meta:
         verbose_name = "Footer Content"
@@ -337,6 +472,10 @@ class FooterContent(SingletonPageModel):
 
     def __str__(self):
         return "Footer Content"
+
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.background_image)
+        super().save(*args, **kwargs)
 
 
 class FooterQuickLink(models.Model):

@@ -1,12 +1,23 @@
 from django.db import models
 
+from backend.image_utils import convert_to_webp
+
 # Create your models here.
 class Company(models.Model):
     name=models.CharField(max_length=100)
     description=models.TextField(blank=True)
+    logo=models.ImageField(
+        upload_to='company_logos/',
+        blank=True,
+        help_text='Brand logo shown on the home page. A PNG with a transparent background works best, around 400 x 200 px.',
+    )
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        convert_to_webp(self.logo)
+        super().save(*args, **kwargs)
 
 
 class CompanyLine(models.Model):

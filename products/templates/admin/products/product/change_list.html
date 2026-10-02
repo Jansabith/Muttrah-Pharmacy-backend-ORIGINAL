@@ -1,0 +1,9 @@
+{% extends "admin/change_list.html" %}
+
+{% comment %}Adds "Import from Excel" next to "Add product"{% endcomment %}
+{% block object-tools-items %}
+  {% if has_add_permission %}
+    <li><a href="{% url 'admin:products_product_import' %}" class="addlink">Import from Excel</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

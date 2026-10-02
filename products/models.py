@@ -4,6 +4,13 @@ from backend.image_utils import convert_to_webp
 from categories.models import Category
 from companies.models import Company, CompanyLine
 
+class ProductQuerySet(models.QuerySet):
+    def with_main_image(self):
+        """Products the website may show: a product imported from Excel stays
+        hidden until its main image is added in the admin."""
+        return self.exclude(image='')
+
+
 # Create your models here.
 class Product(models.Model):
     category=models.ForeignKey(Category, on_delete=models.CASCADE)
@@ -23,7 +30,14 @@ class Product(models.Model):
         blank=True,
         help_text='Enter sizes separated by commas, for example: S, M, L, XL'
     )
-    image=models.ImageField(upload_to='products/')
+    # Optional only so the Excel import can create products before their
+    # photos exist; the admin "Add product" form still requires it
+    image=models.ImageField(
+        'Main image',
+        upload_to='products/',
+        blank=True,
+        help_text='Products without a main image are hidden on the website.'
+    )
     youtube_url=models.URLField(
         blank=True,
         help_text='Optional YouTube video link, for example: https://www.youtube.com/watch?v=XXXXXXXXXXX'
@@ -50,6 +64,8 @@ class Product(models.Model):
     is_available=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
+
+    objects = ProductQuerySet.as_manager()
 
     class Meta:
         ordering = ['-created_at', 'id']

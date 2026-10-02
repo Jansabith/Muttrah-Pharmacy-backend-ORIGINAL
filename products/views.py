@@ -3,7 +3,13 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.text import Truncator
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Case, IntegerField, Q, Value, When
 from rest_framework import filters
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from categories.models import Category
+from companies.models import Company
 from .models import Product
 from .serializers import ProductSerializer
 
@@ -21,11 +27,12 @@ class ProductListAPIView(ListAPIView):
 
     def get_queryset(self):
 
-        queryset = Product.objects.select_related(
+        # Products without a main image (e.g. just imported from Excel) stay hidden
+        queryset = Product.objects.with_main_image().select_related(
             'company',
             'company_line',
             'category'
-        ).prefetch_related('gallery').all()
+        ).prefetch_related('gallery')
 
         company = self.request.GET.get("company")
 
@@ -50,6 +57,76 @@ class ProductListAPIView(ListAPIView):
 
         return queryset
     
+SUGGEST_MIN_LENGTH = 2
+SUGGEST_PRODUCT_LIMIT = 6
+SUGGEST_GROUP_LIMIT = 4
+
+
+class ProductSuggestAPIView(APIView):
+    """Live search for the navbar: a few ranked products plus matching brands
+    and categories. Returns only what the dropdown shows, to stay fast."""
+
+    def get(self, request):
+        query = ' '.join(request.GET.get('q', '').split())[:80]
+        if len(query) < SUGGEST_MIN_LENGTH:
+            return Response({'query': query, 'count': 0, 'products': [], 'brands': [], 'categories': []})
+
+        # Every word must match somewhere (name, brand, line or category)
+        matches = Q()
+        for term in query.split():
+            matches &= (
+                Q(name__icontains=term)
+                | Q(company__name__icontains=term)
+                | Q(company_line__name__icontains=term)
+                | Q(category__name__icontains=term)
+            )
+        queryset = Product.objects.with_main_image().filter(matches)
+
+        # Names starting with the search come first, then names containing it
+        ranked = queryset.select_related('company', 'category').annotate(
+            rank=Case(
+                When(name__istartswith=query, then=Value(0)),
+                When(name__icontains=query, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            )
+        ).order_by('rank', 'name')[:SUGGEST_PRODUCT_LIMIT]
+
+        products = [
+            {
+                'id': product.id,
+                'name': product.name,
+                'slug': product.slug,
+                'image': request.build_absolute_uri(product.image.url) if product.image else '',
+                'company_name': product.company.name,
+                'category_name': product.category.name,
+            }
+            for product in ranked
+        ]
+        brands = [
+            {'id': company.id, 'name': company.name}
+            for company in Company.objects.filter(name__icontains=query).order_by('name')[:SUGGEST_GROUP_LIMIT]
+        ]
+        categories = [
+            {
+                'id': category.id,
+                'name': category.name,
+                'company_name': category.company.name if category.company else '',
+            }
+            for category in Category.objects.filter(name__icontains=query)
+            .select_related('company')
+            .order_by('name')[:SUGGEST_GROUP_LIMIT]
+        ]
+
+        return Response({
+            'query': query,
+            'count': queryset.count(),
+            'products': products,
+            'brands': brands,
+            'categories': categories,
+        })
+
+
 def product_share_preview(request, slug):
     """Link-preview page for WhatsApp, Facebook, etc.
 
@@ -57,7 +134,7 @@ def product_share_preview(request, slug):
     product's title and image. This page gives them those tags directly and
     forwards real visitors to the product page on the website.
     """
-    product = get_object_or_404(Product, slug=slug)
+    product = get_object_or_404(Product.objects.with_main_image(), slug=slug)
 
     title = product.meta_title or product.name
     if 'muttrah pharmacy' not in title.lower():
@@ -78,7 +155,7 @@ def product_share_preview(request, slug):
 
 class ProductDetailAPIView(RetrieveAPIView):
 
-    queryset = Product.objects.prefetch_related('gallery').all()
+    queryset = Product.objects.with_main_image().prefetch_related('gallery')
 
     serializer_class = ProductSerializer
 
