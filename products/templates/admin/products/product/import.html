@@ -1,0 +1,144 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .import-steps { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 16px; }
+    .import-card { border: 1px solid var(--hairline-color); border-radius: 8px; padding: 16px 20px; background: var(--body-bg); }
+    .import-card h2 { margin: 0 0 8px; font-size: 1rem; color: var(--body-fg); background: none; padding: 0; }
+    .import-card p { margin: 0 0 12px; color: var(--body-quiet-color); }
+    .import-card ol { margin: 0 0 12px 18px; padding: 0; color: var(--body-quiet-color); }
+    .import-card ol li { list-style: decimal; margin-bottom: 4px; }
+    .import-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+    .import-pill { border-radius: 999px; padding: 4px 12px; font-weight: 600; font-size: 0.8125rem; }
+    .import-pill.new { background: #e3f4e6; color: #1b5e20; }
+    .import-pill.update { background: #e3edf8; color: #0d3c6e; }
+    .import-pill.error { background: #fbe4e4; color: #8e1b1b; }
+    .import-pill.warning { background: #fdf2dc; color: #7a4b00; }
+    .import-table-wrap { overflow-x: auto; }
+    .import-table { width: 100%; }
+    .import-table td, .import-table th { vertical-align: top; }
+    .import-table tr.is-error td { background: rgba(198, 40, 40, 0.07); }
+    .import-status { font-weight: 700; white-space: nowrap; }
+    .import-status.new { color: #2e7d32; }
+    .import-status.update { color: #1565c0; }
+    .import-status.error { color: #c62828; }
+    .import-notes { margin: 0; padding-left: 16px; }
+    .import-notes li { list-style: disc; }
+    .import-notes .is-error { color: #c62828; }
+    .import-notes .is-warning { color: #8a5a00; }
+    .import-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+  </style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }}{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; Import from Excel
+  </div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="import-steps">
+    <section class="import-card">
+      <h2>Step 1 &middot; Download the template</h2>
+      <ol>
+        <li>Download the Excel template. Its dropdowns list your current brands, product lines and categories.</li>
+        <li>Fill one row per product. Name, Brand, Category and Description are required.</li>
+        <li>New categories must be created in <a href="{% url 'admin:categories_category_changelist' %}">Categories</a> before importing.</li>
+      </ol>
+      <a class="button" href="{{ template_url }}">Download Excel template</a>
+    </section>
+
+    <section class="import-card">
+      <h2>Step 2 &middot; Upload the filled file</h2>
+      <p>Nothing is saved yet &ndash; you will see a preview first.</p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="preview">
+        {% if form.file.errors %}<div class="errornote">{{ form.file.errors|join:" " }}</div>{% endif %}
+        <p>{{ form.file }}</p>
+        <p class="help">{{ form.file.help_text }} Up to {{ max_rows }} products per file.</p>
+        <input type="submit" class="default" value="Check file">
+      </form>
+    </section>
+  </div>
+
+  {% if results %}
+    <section class="import-card">
+      <h2>Step 3 &middot; Check the preview</h2>
+      <div class="import-summary">
+        <span class="import-pill new">{{ summary.new }} new</span>
+        <span class="import-pill update">{{ summary.update }} update{{ summary.update|pluralize }}</span>
+        <span class="import-pill error">{{ summary.error }} with errors</span>
+        {% if summary.warning %}<span class="import-pill warning">{{ summary.warning }} with notes</span>{% endif %}
+      </div>
+
+      {% if summary.error %}
+        <p class="errornote">
+          {{ summary.error }} row{{ summary.error|pluralize }} {{ summary.error|pluralize:"has,have" }} errors (shown in red below).
+          Fix {{ summary.error|pluralize:"it,them" }} in your Excel file and upload it again. Nothing has been saved.
+        </p>
+      {% else %}
+        <form method="post" class="import-confirm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <input type="hidden" name="token" value="{{ token }}">
+          <input type="submit" class="default" value="Confirm import ({{ summary.total }} product{{ summary.total|pluralize }})">
+          <span class="help">New products are saved without images and stay hidden on the website until you add their main image.</span>
+        </form>
+      {% endif %}
+
+      <div class="import-table-wrap">
+        <table class="import-table">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Status</th>
+              <th>Name</th>
+              <th>Brand</th>
+              <th>Product line</th>
+              <th>Category</th>
+              <th>Sizes</th>
+              <th>Available</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for result in results %}
+              <tr class="{% if result.status == 'error' %}is-error{% endif %}">
+                <td>{{ result.row }}</td>
+                <td>
+                  <span class="import-status {{ result.status }}">
+                    {% if result.status == 'new' %}New{% elif result.status == 'update' %}Update{% else %}Error{% endif %}
+                  </span>
+                </td>
+                <td>{{ result.name|default:"-" }}</td>
+                <td>{{ result.brand|default:"-" }}</td>
+                <td>{{ result.line|default:"-" }}</td>
+                <td>{{ result.category|default:"-" }}</td>
+                <td>{{ result.sizes|default:"-" }}</td>
+                <td>{% if result.available is None %}-{% elif result.available %}Yes{% else %}No{% endif %}</td>
+                <td>
+                  {% if result.errors or result.warnings %}
+                    <ul class="import-notes">
+                      {% for error in result.errors %}<li class="is-error">{{ error }}</li>{% endfor %}
+                      {% for warning in result.warnings %}<li class="is-warning">{{ warning }}</li>{% endfor %}
+                    </ul>
+                  {% else %}-{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

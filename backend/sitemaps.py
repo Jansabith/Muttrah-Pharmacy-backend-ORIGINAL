@@ -45,7 +45,8 @@ class ProductSitemap(FrontendSitemap):
     priority = 0.8
 
     def items(self):
-        return Product.objects.order_by("id")
+        # Only products the website shows (they need a main image)
+        return Product.objects.with_main_image().order_by("id")
 
     def location(self, product):
         # Matches the React route /products/:slug

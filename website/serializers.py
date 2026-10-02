@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from products.serializers import ProductSerializer
 from .models import (
     AboutPage,
     AboutTimelineItem,
@@ -11,6 +13,7 @@ from .models import (
     HomePage,
     HomeTrustItem,
     AboutHeroImage,
+    ShowcaseTab,
 )
 
 
@@ -23,7 +26,7 @@ class HomeHeroSlideSerializer(serializers.ModelSerializer):
 class HomeFeatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = HomeFeature
-        fields = ("id", "title", "description", "order")
+        fields = ("id", "title", "icon", "description", "order")
 
 
 class HomeTrustItemSerializer(serializers.ModelSerializer):
@@ -52,6 +55,19 @@ class HomePageSerializer(serializers.ModelSerializer):
     def get_trust_items(self, obj):
         queryset = obj.trust_items.filter(is_active=True)
         return HomeTrustItemSerializer(queryset, many=True).data
+
+
+class ShowcaseTabSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShowcaseTab
+        fields = ("key", "name", "subtitle", "products")
+
+    def get_products(self, tab):
+        # "items" is prefetched in the view: available products only, in position order
+        products = [item.product for item in tab.items.all()]
+        return ProductSerializer(products, many=True, context=self.context).data
 
 
 class AboutTimelineItemSerializer(serializers.ModelSerializer):

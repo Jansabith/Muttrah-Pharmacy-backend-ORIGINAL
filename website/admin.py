@@ -1,5 +1,11 @@
+from django import forms
 from django.contrib import admin
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models import Count
+from django.urls import reverse
 from django.utils.html import format_html
+
+from products.models import Product
 from .models import (
     AboutPage,
     AboutTimelineItem,
@@ -12,6 +18,8 @@ from .models import (
     HomePage,
     HomeTrustItem,
     AboutHeroImage,
+    ShowcaseItem,
+    ShowcaseTab,
 )
 
 
@@ -25,7 +33,7 @@ class SingletonPageAdmin(admin.ModelAdmin):
 class HomeFeatureInline(admin.TabularInline):
     model = HomeFeature
     extra = 1
-    fields = ("title", "description", "order", "is_active")
+    fields = ("title", "icon", "description", "order", "is_active")
 
 
 class HomeTrustItemInline(admin.TabularInline):
@@ -91,7 +99,7 @@ class HomePageAdmin(SingletonPageAdmin):
             )
         }),
         ("Company Introduction", {
-            "fields": ("intro_eyebrow", "intro_title")
+            "fields": ("intro_eyebrow", "intro_title", "intro_description")
         }),
         ("Dynamic Catalog Sections", {
             "fields": (
@@ -174,8 +182,10 @@ class ContactPageAdmin(SingletonPageAdmin):
                 "address",
                 "email_label",
                 "email",
+                "email_2",
                 "phone_label",
                 "phone",
+                "phone_2",
             )
         }),
         ("Map", {
@@ -211,9 +221,179 @@ class FooterContentAdmin(SingletonPageAdmin):
             "fields": ("quick_links_title", "contact_title")
         }),
         ("Contact Information", {
-            "fields": ("address", "email", "phone", "telephone")
+            "fields": ("address", "email", "email_2", "phone", "telephone")
         }),
         ("Bottom Bar", {
             "fields": ("copyright_text", "bottom_note")
         }),
+        ("Background Image", {
+            "fields": ("background_image", "background_shade")
+        }),
     )
+
+
+# ---------------------------------------------------------------------------
+# Home product showcase (Best Sellers / Featured / New Launches)
+#
+# Editor workflow on each tab:
+#   Step 1 - pick existing products in the two-box selector and save.
+#   Step 2 - the chosen products are listed below; type their positions and save.
+# ---------------------------------------------------------------------------
+
+class ShowcaseProductChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, product):
+        label = f"{product.name} - {product.company.name}"
+        if not product.is_available:
+            label += " (not available)"
+        elif not product.image:
+            label += " (no main image yet)"
+        return label
+
+
+class ShowcaseTabForm(forms.ModelForm):
+    selected_products = ShowcaseProductChoiceField(
+        label="Products",
+        queryset=Product.objects.select_related("company").order_by("name"),
+        required=False,
+        widget=FilteredSelectMultiple("products", is_stacked=False),
+        help_text=(
+            "Click a product on the left and press the arrow to add it to this tab. "
+            "To remove one, click it on the right and press the back arrow. "
+            "Products marked \"not available\" are not shown on the website."
+        ),
+    )
+
+    class Meta:
+        model = ShowcaseTab
+        fields = ("name", "subtitle", "is_active", "order")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["selected_products"].initial = list(
+                self.instance.items.values_list("product_id", flat=True)
+            )
+
+
+class ShowcaseItemInline(admin.TabularInline):
+    model = ShowcaseItem
+    extra = 0
+    can_delete = False
+    verbose_name = "chosen product"
+    verbose_name_plural = (
+        "Step 2 - Set the order (1 shows first). "
+        "Newly chosen products appear here after you save."
+    )
+    fields = ("order", "image_preview", "product_details", "website_status")
+    readonly_fields = ("image_preview", "product_details", "website_status")
+    ordering = ("order", "id")
+
+    # Products are only added or removed with the selector above, so there is
+    # one clear way to do it
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            "product__company", "product__category"
+        )
+
+    @admin.display(description="Image")
+    def image_preview(self, item):
+        if not item.product.image:
+            return "-"
+        return format_html(
+            '<img src="{}" alt="" style="height:64px;width:64px;object-fit:contain;'
+            'background:#fff;border:1px solid #ddd;border-radius:6px;">',
+            item.product.image.url,
+        )
+
+    @admin.display(description="Product")
+    def product_details(self, item):
+        product = item.product
+        url = reverse("admin:products_product_change", args=[product.pk])
+        details = " / ".join(
+            name for name in (product.company.name, product.category.name) if name
+        )
+        return format_html(
+            '<a href="{}"><strong>{}</strong></a><br><span style="color:#777;">{}</span>',
+            url,
+            product.name,
+            details,
+        )
+
+    @admin.display(description="On website")
+    def website_status(self, item):
+        if not item.product.is_available:
+            reason = "Hidden - product is marked not available"
+        elif not item.product.image:
+            reason = "Hidden - add the product's main image first"
+        else:
+            return format_html('<strong style="color:#2e7d32;">{}</strong>', "Shown")
+        return format_html('<strong style="color:#c62828;">{}</strong>', reason)
+
+
+@admin.register(ShowcaseTab)
+class ShowcaseTabAdmin(admin.ModelAdmin):
+    form = ShowcaseTabForm
+    inlines = [ShowcaseItemInline]
+    list_display = ("name", "products_chosen", "is_active", "order")
+    list_editable = ("is_active", "order")
+    fieldsets = (
+        ("Tab settings", {
+            "fields": ("name", "subtitle", ("is_active", "order")),
+        }),
+        ("Step 1 - Choose products for this tab", {
+            "description": (
+                "Only products you have already added under Products are listed. "
+                "After choosing, press Save - you stay on this page to set their order below."
+            ),
+            "fields": ("selected_products",),
+        }),
+    )
+
+    # The three tabs come from a migration; editors only change them
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(product_count=Count("items"))
+
+    @admin.display(description="Products chosen", ordering="product_count")
+    def products_chosen(self, tab):
+        return tab.product_count
+
+    def save_related(self, request, form, formsets, change):
+        # Saves the typed positions first, then applies the selector
+        super().save_related(request, form, formsets, change)
+        tab = form.instance
+        chosen = list(form.cleaned_data.get("selected_products") or [])
+        chosen_ids = {product.pk for product in chosen}
+
+        tab.items.exclude(product_id__in=chosen_ids).delete()
+
+        existing_ids = set(tab.items.values_list("product_id", flat=True))
+        items = list(tab.items.order_by("order", "id"))
+        # Newly chosen products go to the end of the list
+        items += [
+            ShowcaseItem(tab=tab, product=product)
+            for product in chosen
+            if product.pk not in existing_ids
+        ]
+
+        # Renumber 1, 2, 3... so the positions always read cleanly
+        for position, item in enumerate(items, start=1):
+            if item.pk is None or item.order != position:
+                item.order = position
+                item.save()
+
+    def response_change(self, request, obj):
+        # Plain "Save" stays on the tab, so the order of newly chosen
+        # products can be set straight away
+        if "_continue" not in request.POST:
+            request.POST = request.POST.copy()
+            request.POST["_continue"] = "1"
+        return super().response_change(request, obj)

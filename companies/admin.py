@@ -14,6 +14,7 @@ class CompanyLineInline(admin.TabularInline):
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+    fields = ('name', 'logo', 'description')
     inlines = [CompanyLineInline]
 
 
