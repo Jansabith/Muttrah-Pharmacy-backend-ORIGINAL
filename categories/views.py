@@ -4,6 +4,8 @@ from django.shortcuts import render
 
 from rest_framework.generics import ListAPIView
 
+from backend.filters import by_slug_or_id
+
 from .models import Category
 from .serializers import CategorySerializer
 
@@ -22,13 +24,9 @@ class CategoryListAPIView(ListAPIView):
         company_line = self.request.GET.get("company_line")
 
         if company:
-            queryset = queryset.filter(
-                company_id=company
-            )
+            queryset = queryset.filter(by_slug_or_id('company', company))
 
         if company_line:
-            queryset = queryset.filter(
-                company_line_id=company_line
-            )
+            queryset = queryset.filter(by_slug_or_id('company_line', company_line))
 
         return queryset

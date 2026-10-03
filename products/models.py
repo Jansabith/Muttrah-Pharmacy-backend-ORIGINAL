@@ -1,6 +1,7 @@
 from django.db import models
+from django.utils.text import slugify
 
-from backend.image_utils import convert_to_webp
+from backend.image_utils import convert_to_webp, is_new_upload
 from categories.models import Category
 from companies.models import Company, CompanyLine
 
@@ -73,8 +74,32 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def display_title(self):
+        """Brand + name, e.g. "TYNOR Knee Cap Air". The brand is left out when
+        the name already starts with it ("Tynor Knee Cap" stays as it is)."""
+        brand = self.company.name.strip() if self.company_id else ''
+        name = self.name.strip()
+        if not brand or name.lower() == brand.lower() or name.lower().startswith(f'{brand.lower()} '):
+            return name
+        return f'{brand} {name}'
+
+    @property
+    def image_alt(self):
+        """Automatic alt text for the main image, e.g.
+        "TYNOR Knee Cap Air – Knee Supports"."""
+        category = self.category.name.strip() if self.category_id else ''
+        return f'{self.display_title} – {category}' if category else self.display_title
+
+    def image_file_stem(self, suffix=''):
+        """SEO-friendly file name for uploaded images, e.g. "tynor-knee-cap-air"
+        (whatever the file was called on the computer)."""
+        stem = slugify(self.display_title)[:60].strip('-') or 'product'
+        return f'{stem}{suffix}'
+
     def save(self, *args, **kwargs):
-        convert_to_webp(self.image)
+        if is_new_upload(self.image):
+            convert_to_webp(self.image, filename=self.image_file_stem())
         super().save(*args, **kwargs)
     
 
@@ -94,9 +119,23 @@ class ProductImage(models.Model):
     image = models.ImageField(
         upload_to='gallery/'
     )
+    alt_text = models.CharField(
+        'Alt text',
+        max_length=160,
+        blank=True,
+        help_text='Optional. What this photo shows, e.g. "TYNOR Knee Cap Air side view". '
+                  'Leave empty to use the brand and product name.'
+    )
+
+    @property
+    def alt(self):
+        return self.alt_text.strip() or self.product.display_title
 
     def save(self, *args, **kwargs):
-        convert_to_webp(self.image)
+        if is_new_upload(self.image):
+            # Main image is "...", gallery photos continue as "...-2", "...-3"
+            position = ProductImage.objects.filter(product_id=self.product_id).exclude(pk=self.pk).count() + 2
+            convert_to_webp(self.image, filename=self.product.image_file_stem(f'-{position}'))
         super().save(*args, **kwargs)
     
 

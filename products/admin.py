@@ -19,6 +19,7 @@ IMPORT_SESSION_KEY = 'product_import_preview'
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
+    fields = ("image", "alt_text")
     extra = 3
     verbose_name = "Gallery image"
     verbose_name_plural = "Gallery images (shown under the main image)"

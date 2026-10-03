@@ -8,6 +8,7 @@ from rest_framework import filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from backend.filters import by_slug_or_id
 from categories.models import Category
 from companies.models import Company
 from .models import Product
@@ -40,20 +41,15 @@ class ProductListAPIView(ListAPIView):
 
         category = self.request.GET.get("category")
 
+        # Each accepts the name in the address (?company=tynor) or an old number
         if company:
-            queryset = queryset.filter(
-                company_id=company
-            )
+            queryset = queryset.filter(by_slug_or_id('company', company))
 
         if company_line:
-            queryset = queryset.filter(
-                company_line_id=company_line
-            )
+            queryset = queryset.filter(by_slug_or_id('company_line', company_line))
 
         if category:
-            queryset = queryset.filter(
-                category_id=category
-            )
+            queryset = queryset.filter(by_slug_or_id('category', category))
 
         return queryset
     
@@ -104,12 +100,13 @@ class ProductSuggestAPIView(APIView):
             for product in ranked
         ]
         brands = [
-            {'id': company.id, 'name': company.name}
+            {'id': company.id, 'slug': company.slug, 'name': company.name}
             for company in Company.objects.filter(name__icontains=query).order_by('name')[:SUGGEST_GROUP_LIMIT]
         ]
         categories = [
             {
                 'id': category.id,
+                'slug': category.slug,
                 'name': category.name,
                 'company_name': category.company.name if category.company else '',
             }
@@ -155,7 +152,9 @@ def product_share_preview(request, slug):
 
 class ProductDetailAPIView(RetrieveAPIView):
 
-    queryset = Product.objects.with_main_image().prefetch_related('gallery')
+    queryset = Product.objects.with_main_image().select_related(
+        'company', 'category'
+    ).prefetch_related('gallery')
 
     serializer_class = ProductSerializer
 

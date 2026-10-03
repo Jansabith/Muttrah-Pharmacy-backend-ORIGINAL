@@ -3,10 +3,12 @@ from .models import Product, ProductImage
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    # The editor's alt text, or brand + product name when it is empty
+    alt = serializers.CharField(read_only=True)
 
     class Meta:
         model = ProductImage
-        fields = ["id", "image"]
+        fields = ["id", "image", "alt"]
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -30,6 +32,9 @@ class ProductSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
+
+    # Automatic main image alt text, e.g. "TYNOR Knee Cap Air – Knee Supports"
+    image_alt = serializers.CharField(read_only=True)
 
     class Meta:
         model = Product
