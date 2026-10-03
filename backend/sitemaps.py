@@ -3,6 +3,8 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 
+from categories.models import Category
+from companies.models import Company
 from products.models import Product
 
 # Set FRONTEND_URL=https://muttrahpharmacy.com in the server's .env so the
@@ -40,6 +42,36 @@ class StaticPagesSitemap(FrontendSitemap):
         return self.pages[item][1]
 
 
+class CompanySitemap(FrontendSitemap):
+    """One URL per brand, e.g. /products?company=tynor."""
+
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return Company.objects.order_by("id")
+
+    def location(self, company):
+        return f"/products?company={company.slug}"
+
+
+class CategorySitemap(FrontendSitemap):
+    """One URL per category: /products?company=<brand>&category=<category>
+    for categories that belong to a brand, or /products?category=<category>
+    for the few that do not (matches how the website links to them)."""
+
+    changefreq = "weekly"
+    priority = 0.5
+
+    def items(self):
+        return Category.objects.select_related("company").order_by("id")
+
+    def location(self, category):
+        if category.company_id:
+            return f"/products?company={category.company.slug}&category={category.slug}"
+        return f"/products?category={category.slug}"
+
+
 class ProductSitemap(FrontendSitemap):
     changefreq = "weekly"
     priority = 0.8
@@ -58,5 +90,7 @@ class ProductSitemap(FrontendSitemap):
 
 sitemaps = {
     "pages": StaticPagesSitemap,
+    "brands": CompanySitemap,
+    "categories": CategorySitemap,
     "products": ProductSitemap,
 }

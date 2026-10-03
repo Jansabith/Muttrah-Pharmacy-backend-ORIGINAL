@@ -5,16 +5,25 @@ from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 
-def convert_to_webp(field_file, quality=85):
+def is_new_upload(field_file):
+    """True for a file just uploaded in a form and not yet stored."""
+    return bool(field_file) and not getattr(field_file, '_committed', True)
+
+
+def convert_to_webp(field_file, quality=85, filename=None):
     """Re-encode a newly uploaded image as WebP before it is stored.
 
     Only runs for fresh uploads (not yet committed to storage), so editing
     other fields of an existing record never re-processes its image.
     Files that are already WebP are kept as they are.
+    `filename` (without extension) renames the upload, e.g. after the product
+    for SEO; otherwise the uploaded file's own name is kept.
     """
-    if not field_file or getattr(field_file, '_committed', True):
+    if not is_new_upload(field_file):
         return
+    base_name = filename or os.path.splitext(os.path.basename(field_file.name))[0]
     if field_file.name.lower().endswith('.webp'):
+        field_file.name = f'{base_name}.webp'
         return
 
     image = Image.open(field_file)
@@ -35,5 +44,4 @@ def convert_to_webp(field_file, quality=85):
         save_options['icc_profile'] = icc_profile
     image.save(buffer, **save_options)
 
-    base_name = os.path.splitext(os.path.basename(field_file.name))[0]
     field_file.save(f'{base_name}.webp', ContentFile(buffer.getvalue()), save=False)
